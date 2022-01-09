@@ -78,6 +78,7 @@ class FlipWidgetState extends State<FlipWidget> {
   @override
   void dispose() {
     super.dispose();
+    _render.destroy();
     controller.dispose();
     _disposed = true;
   }

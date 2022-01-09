@@ -227,4 +227,17 @@ class GLRender {
 
     GLES20.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
+
+  void destroy() {
+    GLES20.glDeleteBuffers(2, buffers);
+    malloc.free(buffers);
+    malloc.free(_templateString);
+    if (_mainTexture != -1) {
+      Pointer<Uint32> textures = malloc.allocate(sizeOf<Uint32>());
+      textures[0] = _mainTexture;
+      GLES20.glDeleteTextures(1, textures);
+      malloc.free(textures);
+    }
+    GLES20.glDeleteProgram(_programHandle);
+  }
 }
