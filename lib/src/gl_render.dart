@@ -25,20 +25,40 @@ uniform float tilt;
 varying vec2 uv;
 void main()
 {
+    const float roll_size = 0.04;
     float x1 = uv.x;
     float y1 = 1.0 - uv.y;
     if (tilt * (x1 - percent) > y1) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
         float x0 = (x1 / tilt + y1 + percent * tilt) / (tilt + 1.0/tilt);
+        float off = x1 - x0;
+        float dis = abs(off);
         float x2 = 2.0 * x0 - x1;
-        float dis = abs(x1 - x0);
-        float y2 = 2.0 * (x1 - x0) / tilt + y1 - max(0.0, x2 - percent) * (1.0 - x2) / (1.0 - percent);
-        if (y2 > 0.0 && x2 < 1.0) {
-            vec4 val = mix(vec4(0.6, 0.6, 0.6, 1.0), vec4(0.98, 0.98, 0.98, 1.0), min(1.0, dis/0.1));
-            gl_FragColor = texture2D(texture, vec2(x2, 1.0 - y2)) * val;
+        float y2 = 2.0 * (x1 - x0) / tilt + y1;
+        if (off > -roll_size && off <= 0.0) {
+            y1 = y1 - (-sqrt(-off * off - 2.0 * roll_size * off) + roll_size);
+        }
+        if (y1 > 0.0) {
+            off = x2 - x0;
+            if (off > 0.0) {
+                if (off < roll_size) {
+                    y2 = y2 - (sqrt(-off * off + 2.0 * roll_size * off) + roll_size);
+                } else {
+                    y2 = y2 - 2.0 * roll_size;
+                }
+            }
+            if (y2 > 0.0 && x2 < 1.0) {
+                vec4 shadow = mix(vec4(0.6, 0.6, 0.6, 1.0), vec4(0.98, 0.98, 0.98, 1.0), min(1.0, dis/0.1));
+                gl_FragColor = texture2D(texture, vec2(x2, 1.0 - y2)) * shadow;
+            } else {
+                vec4 shadow = mix(vec4(1.2, 1.2, 1.2, 1.0), vec4(1.0, 1.0, 1.0, 1.0), min(1.0, dis/0.1));
+                float sha_off = pow(max(0.0, -y2), 2.0) + pow(max(0.0, x2 - 1.0), 2.0);
+                shadow = shadow - (1.0 - smoothstep(0.0, 0.06 * 0.06, sha_off)) * vec4(0.3, 0.3, 0.3, 0.0);
+                gl_FragColor = texture2D(texture, vec2(x1, 1.0 - y1)) * shadow;
+            }
         } else {
-            gl_FragColor = texture2D(texture, vec2(x1, 1.0 - y1));
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
         }
     }
 }
@@ -109,6 +129,9 @@ class GLRender {
   late Pointer<Uint32> buffers;
   int _mainTexture = -1;
 
+  late Pointer<Float> _posBuffer;
+  late Pointer<Float> _uvBuffer;
+
   late Pointer<Int8> _templateString;
 
   Pointer<Int8> _n(String str) {
@@ -153,25 +176,34 @@ class GLRender {
       1, 1,
     ];
 
+    // VBO will cause crash on android simulator
     buffers = malloc.allocate(sizeOf<Uint32>() * 2);
-    GLES20.glGenBuffers(2, buffers);
-    GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    // GLES20.glGenBuffers(2, buffers);
+    // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 
-    int len = sizeOf<Float>() * pos.length;
-    Pointer<Float> buffer = malloc.allocate(len);
-    Float32List list = buffer.asTypedList(pos.length);
+    // int len = sizeOf<Float>() * pos.length;
+    // Pointer<Float> buffer = malloc.allocate(len);
+    // Float32List list = buffer.asTypedList(pos.length);
+    // list.setAll(0, pos);
+    // GLES20.glBufferData(GL_ARRAY_BUFFER, len, buffer.cast<Void>(), GL_STATIC_DRAW);
+    // malloc.free(buffer);
+    //
+    // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+    //
+    // len = sizeOf<Float>() * uv.length;
+    // buffer = malloc.allocate(len);
+    // list = buffer.asTypedList(pos.length);
+    // list.setAll(0, uv);
+    // GLES20.glBufferData(GL_ARRAY_BUFFER, len, buffer.cast<Void>(), GL_STATIC_DRAW);
+    // malloc.free(buffer);
+
+    _posBuffer = malloc.allocate(sizeOf<Float>() * pos.length);
+    var list = _posBuffer.asTypedList(pos.length);
     list.setAll(0, pos);
-    GLES20.glBufferData(GL_ARRAY_BUFFER, len, buffer.cast<Void>(), GL_STATIC_DRAW);
-    malloc.free(buffer);
 
-    GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-
-    len = sizeOf<Float>() * uv.length;
-    buffer = malloc.allocate(len);
-    list = buffer.asTypedList(pos.length);
+    _uvBuffer = malloc.allocate(sizeOf<Float>() * uv.length);
+    list = _uvBuffer.asTypedList(pos.length);
     list.setAll(0, uv);
-    GLES20.glBufferData(GL_ARRAY_BUFFER, len, buffer.cast<Void>(), GL_STATIC_DRAW);
-    malloc.free(buffer);
   }
 
   void updateTexture(int width, int height, Uint8List bytes) {
@@ -211,12 +243,12 @@ class GLRender {
     GLES20.glUseProgram(_programHandle);
 
     GLES20.glEnableVertexAttribArray(_positionAttr);
-    GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-    GLES20.glVertexAttribPointer(_positionAttr, 3, GL_FLOAT, 0, 0, Pointer.fromAddress(0) );
+    // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    GLES20.glVertexAttribPointer(_positionAttr, 3, GL_FLOAT, GL_FALSE, 0, _posBuffer.cast<Void>() );
 
     GLES20.glEnableVertexAttribArray(_texCoordAttr);
-    GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-    GLES20.glVertexAttribPointer(_texCoordAttr, 2, GL_FLOAT, 0, 0, Pointer.fromAddress(0) );
+    // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+    GLES20.glVertexAttribPointer(_texCoordAttr, 2, GL_FLOAT, GL_FALSE, 0, _uvBuffer.cast<Void>() );
 
     GLES20.glActiveTexture(GL_TEXTURE0);
     GLES20.glBindTexture(GL_TEXTURE_2D, _mainTexture);
@@ -232,6 +264,8 @@ class GLRender {
     GLES20.glDeleteBuffers(2, buffers);
     malloc.free(buffers);
     malloc.free(_templateString);
+    malloc.free(_posBuffer);
+    malloc.free(_uvBuffer);
     if (_mainTexture != -1) {
       Pointer<Uint32> textures = malloc.allocate(sizeOf<Uint32>());
       textures[0] = _mainTexture;

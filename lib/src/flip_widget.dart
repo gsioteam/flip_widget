@@ -116,11 +116,10 @@ class FlipWidgetState extends State<FlipWidget> {
     }
   }
 
-  Future<void> flip(double percent) {
+  Future<void> flip(double percent, double tilt) {
     return _queueAction(() {
       controller.beginDraw();
-      print('Percent ${1 - (percent * 2)}');
-      _render.draw(1 - (percent * 2), 1);
+      _render.draw(1 - (percent * 2), tilt);
       controller.endDraw();
     });
   }
