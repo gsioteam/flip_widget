@@ -40,7 +40,7 @@ vec2 to_uv(vec2 pos) {
 
 void main()
 {
-    const float roll_size = 10.0;
+    const float roll_size = 6.0;
     float x1 = px(uv.x);
     float y1 = py(1.0 - uv.y);
     float per = px(percent);
