@@ -261,7 +261,7 @@ class GLRender {
   }
 
   void destroy() {
-    GLES20.glDeleteBuffers(2, buffers);
+    // GLES20.glDeleteBuffers(2, buffers);
     malloc.free(buffers);
     malloc.free(_templateString);
     malloc.free(_posBuffer);
