@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:opengl_es_bindings/opengl_es_bindings.dart';
 import 'package:ffi/ffi.dart';
 
@@ -22,16 +23,31 @@ precision mediump float;
 uniform sampler2D texture;
 uniform float percent;
 uniform float tilt;
+uniform vec2 size;
 varying vec2 uv;
+
+float px(float uvx) {
+    return uvx * size.x;
+}
+
+float py(float uvy) {
+    return uvy * size.y;
+}
+
+vec2 to_uv(vec2 pos) {
+    return vec2(pos.x / size.x, 1.0 - pos.y / size.y);
+}
+
 void main()
 {
-    const float roll_size = 0.04;
-    float x1 = uv.x;
-    float y1 = 1.0 - uv.y;
-    if (tilt * (x1 - percent) > y1) {
+    const float roll_size = 10.0;
+    float x1 = px(uv.x);
+    float y1 = py(1.0 - uv.y);
+    float per = px(percent);
+    if (tilt * (x1 - per) > y1) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
-        float x0 = (x1 / tilt + y1 + percent * tilt) / (tilt + 1.0/tilt);
+        float x0 = (x1 / tilt + y1 + per * tilt) / (tilt + 1.0/tilt);
         float off = x1 - x0;
         float dis = abs(off);
         float x2 = 2.0 * x0 - x1;
@@ -48,14 +64,14 @@ void main()
                     y2 = y2 - 2.0 * roll_size;
                 }
             }
-            if (y2 > 0.0 && x2 < 1.0) {
-                vec4 shadow = mix(vec4(0.6, 0.6, 0.6, 1.0), vec4(0.98, 0.98, 0.98, 1.0), min(1.0, dis/0.1));
-                gl_FragColor = texture2D(texture, vec2(x2, 1.0 - y2)) * shadow;
+            if (y2 > 0.0 && x2 < size.x) {
+                vec4 shadow = mix(vec4(0.6, 0.6, 0.6, 1.0), vec4(0.98, 0.98, 0.98, 1.0), min(1.0, dis/20.0));
+                gl_FragColor = texture2D(texture, to_uv(vec2(x2, y2))) * shadow;
             } else {
-                vec4 shadow = mix(vec4(1.2, 1.2, 1.2, 1.0), vec4(1.0, 1.0, 1.0, 1.0), min(1.0, dis/0.1));
-                float sha_off = pow(max(0.0, -y2), 2.0) + pow(max(0.0, x2 - 1.0), 2.0);
-                shadow = shadow - (1.0 - smoothstep(0.0, 0.06 * 0.06, sha_off)) * vec4(0.3, 0.3, 0.3, 0.0);
-                gl_FragColor = texture2D(texture, vec2(x1, 1.0 - y1)) * shadow;
+                vec4 shadow = mix(vec4(1.2, 1.2, 1.2, 1.0), vec4(1.0, 1.0, 1.0, 1.0), min(1.0, dis/20.0));
+                float sha_off = pow(max(0.0, -y2), 2.0) + pow(max(0.0, x2 - size.x), 2.0);
+                shadow = shadow - (1.0 - smoothstep(0.0, 81.0, sha_off)) * vec4(0.3, 0.3, 0.3, 0.0);
+                gl_FragColor = texture2D(texture, to_uv(vec2(x1, y1))) * shadow;
             }
         } else {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
@@ -116,6 +132,13 @@ class GLRender {
     // Compile the shader
     GLES20.glCompileShader(shader);
 
+    Pointer<Int32> ret = malloc.allocate(sizeOf<Int32>());
+    GLES20.glGetShaderiv(shader, GL_COMPILE_STATUS, ret);
+    if (ret[0] == GL_FALSE) {
+      GLES20.glGetShaderInfoLog(shader, 512, Pointer<Int32>.fromAddress(0), _templateString);
+      print("FlipTexture: ${_templateString.cast<Utf8>().toDartString()}");
+    }
+
     return shader;
   }
 
@@ -125,6 +148,7 @@ class GLRender {
   int _textureUniform = 0;
   int _percentUniform = 0;
   int _tiltUniform = 0;
+  int _sizeUniform = 0;
 
   late Pointer<Uint32> buffers;
   int _mainTexture = -1;
@@ -133,6 +157,8 @@ class GLRender {
   late Pointer<Float> _uvBuffer;
 
   late Pointer<Int8> _templateString;
+
+  Size _imageSize = const Size(512, 512);
 
   Pointer<Int8> _n(String str) {
     final units = utf8.encode(str);
@@ -161,6 +187,7 @@ class GLRender {
     _textureUniform = GLES20.glGetUniformLocation(_programHandle, _n("texture"));
     _percentUniform = GLES20.glGetUniformLocation(_programHandle, _n("percent"));
     _tiltUniform = GLES20.glGetUniformLocation(_programHandle, _n("tilt"));
+    _sizeUniform = GLES20.glGetUniformLocation(_programHandle, _n("size"));
 
     List<double> pos = [
       -1.0, 1.0, 0.0,
@@ -207,6 +234,8 @@ class GLRender {
   }
 
   void updateTexture(int width, int height, Uint8List bytes) {
+
+    _imageSize = Size(width.toDouble(), height.toDouble());
 
     Pointer<Uint32> textures = malloc.allocate(sizeOf<Uint32>());
     if (_mainTexture != -1) {
@@ -256,6 +285,8 @@ class GLRender {
 
     GLES20.glUniform1f(_percentUniform, percent);
     GLES20.glUniform1f(_tiltUniform, tilt);
+
+    GLES20.glUniform2f(_sizeUniform, _imageSize.width, _imageSize.height);
 
     GLES20.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }

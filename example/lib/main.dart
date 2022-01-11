@@ -36,7 +36,7 @@ class _MyAppState extends State<MyApp> {
           children: [
             Container(
               width: 256,
-              height: 256,
+              height: 512,
               child: GestureDetector(
                 child: FlipWidget(
                   key: _flipKey,
