@@ -55,7 +55,7 @@ class _MyAppState extends State<MyApp> {
                   Offset off = details.globalPosition - _oldPosition;
                   double percent = math.max(0, -off.dx / 256 / 2);
                   double tilt = math.max(0.3, math.min(8.0, 3.0 + off.dy / 100));
-                  percent = percent + math.max(0, percent / 2 * (1-1/tilt));
+                  percent = percent - math.max(0, percent / 2 * (1-1/tilt));
                   _flipKey.currentState?.flip(percent, tilt);
                 },
                 onHorizontalDragEnd: (details) {
