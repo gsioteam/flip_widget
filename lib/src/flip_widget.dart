@@ -40,9 +40,12 @@ class FlipWidgetState extends State<FlipWidget> {
         ValueListenableBuilder<bool>(
           valueListenable: _flipping,
           builder: (context, value, child) {
-            return Visibility(
-                visible: !value,
-                child: child!
+            return IgnorePointer(
+              ignoring: value,
+              child: Opacity(
+                opacity: value ? 0 : 1,
+                child: child!,
+              ),
             );
           },
           child: RepaintBoundary(
