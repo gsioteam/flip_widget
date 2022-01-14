@@ -261,13 +261,16 @@ class GLRender {
     malloc.free(buffer);
   }
 
+  int textureWidth;
+  int textureHeight;
+
   void draw(double percent, double tilt) {
 
     GLES20.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GLES20.glClearColor(0, 0, 0, 0);
     GLES20.glClear(GL_COLOR_BUFFER_BIT);
 
-    GLES20.glViewport(0, 0, 512, 512);
+    GLES20.glViewport(0, 0, textureWidth, textureHeight);
 
     GLES20.glUseProgram(_programHandle);
 
@@ -305,4 +308,6 @@ class GLRender {
     }
     GLES20.glDeleteProgram(_programHandle);
   }
+
+  GLRender(this.textureWidth, this.textureHeight);
 }

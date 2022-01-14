@@ -12,10 +12,12 @@ import './gl_render.dart';
 class FlipWidget extends StatefulWidget {
 
   final Widget? child;
+  final Size textureSize;
 
   FlipWidget({
     Key? key,
     this.child,
+    this.textureSize = const Size(512, 512),
   }) : super(key: key);
 
   @override
@@ -29,7 +31,7 @@ class FlipWidgetState extends State<FlipWidget> {
   ValueNotifier<bool> _flipping = ValueNotifier(false);
   late GLCanvasController controller;
 
-  GLRender _render = GLRender();
+  late GLRender _render;
 
   bool _disposed = false;
 
@@ -72,7 +74,11 @@ class FlipWidgetState extends State<FlipWidget> {
   @override
   void initState() {
     super.initState();
-    controller = GLCanvasController();
+    controller = GLCanvasController(
+      width: widget.textureSize.width,
+      height: widget.textureSize.height,
+    );
+    _render = GLRender(widget.textureSize.width.toInt(), widget.textureSize.height.toInt());
     controller.ready.then((value) {
       _render.initialize();
     });
