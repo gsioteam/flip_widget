@@ -14,6 +14,8 @@ class FlipWidget extends StatefulWidget {
   final Widget? child;
   final Size textureSize;
 
+  /// [child] is the widget you want to flip.
+  /// [textureSize] is the pixel size of effect layer.
   FlipWidget({
     Key? key,
     this.child,
@@ -125,6 +127,8 @@ class FlipWidgetState extends State<FlipWidget> {
     }
   }
 
+  /// [percent] is the position for flipping at the bottom.
+  /// [tilt] is the `a` of `y = a*x + b`(line equation).
   Future<void> flip(double percent, double tilt) {
     return _queueAction(() {
       controller.beginDraw();
@@ -133,6 +137,7 @@ class FlipWidgetState extends State<FlipWidget> {
     });
   }
 
+  /// Dismiss effect layer and show the original widget.
   Future<void> stopFlip() {
     return _queueAction(() {
       _flipping.value = false;
