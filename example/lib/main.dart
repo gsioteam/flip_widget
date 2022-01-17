@@ -14,6 +14,18 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
+const double _MinNumber = 0.008;
+double _clampMin(double v) {
+  if (v < _MinNumber && v > -_MinNumber) {
+    if (v >= 0) {
+      v = _MinNumber;
+    } else {
+      v = -_MinNumber;
+    }
+  }
+  return v;
+}
+
 class _MyAppState extends State<MyApp> {
   GlobalKey<FlipWidgetState> _flipKey = GlobalKey();
 
@@ -57,7 +69,7 @@ class _MyAppState extends State<MyApp> {
                   },
                   onHorizontalDragUpdate: (details) {
                     Offset off = details.globalPosition - _oldPosition;
-                    double tilt = 1/((-off.dy + 20) / 100);
+                    double tilt = 1/_clampMin((-off.dy + 20) / 100);
                     double percent = math.max(0, -off.dx / size.width * 1.4);
                     percent = percent - percent / 2 * (1-1/tilt);
                     _flipKey.currentState?.flip(percent, tilt);
