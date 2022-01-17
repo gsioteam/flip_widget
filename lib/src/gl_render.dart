@@ -44,7 +44,7 @@ void main()
     float x1 = px(uv.x);
     float y1 = py(1.0 - uv.y);
     float per = px(percent);
-    if (tilt * (x1 - per) > y1) {
+    if (y1 / tilt + per < x1) {
         gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
         float x0 = (x1 / tilt + y1 + per * tilt) / (tilt + 1.0/tilt);
@@ -64,12 +64,12 @@ void main()
                     y2 = y2 - 2.0 * roll_size;
                 }
             }
-            if (y2 > 0.0 && x2 < size.x) {
+            if (y2 > 0.0 && y2 < size.y && x2 < size.x) {
                 vec4 shadow = mix(vec4(0.6, 0.6, 0.6, 1.0), vec4(0.98, 0.98, 0.98, 1.0), min(1.0, dis/20.0));
                 gl_FragColor = texture2D(texture, to_uv(vec2(x2, y2))) * shadow;
             } else {
                 vec4 shadow = mix(vec4(1.2, 1.2, 1.2, 1.0), vec4(1.0, 1.0, 1.0, 1.0), min(1.0, dis/20.0));
-                float sha_off = pow(max(0.0, -y2), 2.0) + pow(max(0.0, x2 - size.x), 2.0);
+                float sha_off = pow(max(0.0, max(y2 - size.y, -y2)), 2.0) + pow(max(0.0, x2 - size.x), 2.0);
                 shadow = shadow - (1.0 - smoothstep(0.0, 81.0, sha_off)) * vec4(0.3, 0.3, 0.3, 0.0);
                 gl_FragColor = texture2D(texture, to_uv(vec2(x1, y1))) * shadow;
             }

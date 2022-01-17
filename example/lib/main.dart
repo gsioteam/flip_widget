@@ -26,6 +26,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = Size(256, 256);
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -35,11 +36,12 @@ class _MyAppState extends State<MyApp> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 256,
-              height: 512,
+              width: size.width,
+              height: size.height,
               child: GestureDetector(
                 child: FlipWidget(
                   key: _flipKey,
+                  textureSize: size * 2,
                   child: Container(
                     color: Colors.blue,
                     child: Center(
@@ -53,9 +55,9 @@ class _MyAppState extends State<MyApp> {
                 },
                 onHorizontalDragUpdate: (details) {
                   Offset off = details.globalPosition - _oldPosition;
-                  double percent = math.max(0, -off.dx / 256 / 2);
-                  double tilt = math.max(0.3, math.min(8.0, 3.0 + off.dy / 100));
-                  percent = percent - math.max(0, percent / 2 * (1-1/tilt));
+                  double tilt = 1/((-off.dy + 20) / 100);
+                  double percent = math.max(0, -off.dx / size.width * 1.4);
+                  percent = percent - percent / 2 * (1-1/tilt);
                   _flipKey.currentState?.flip(percent, tilt);
                 },
                 onHorizontalDragEnd: (details) {

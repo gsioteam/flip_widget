@@ -1,6 +1,6 @@
 name: flip_widget
-description: A new Flutter package.
-version: 0.1.3
+description: Flip your widget.
+version: 0.1.4
 homepage: https://github.com/gsioteam/flip_widget
 
 environment:
