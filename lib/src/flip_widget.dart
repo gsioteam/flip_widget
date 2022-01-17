@@ -131,6 +131,7 @@ class FlipWidgetState extends State<FlipWidget> {
   /// [tilt] is the `a` of `y = a*x + b`(line equation).
   Future<void> flip(double percent, double tilt) {
     return _queueAction(() {
+      if (_disposed) return;
       controller.beginDraw();
       _render.draw(1 - percent, tilt);
       controller.endDraw();

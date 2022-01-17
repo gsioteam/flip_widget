@@ -1,6 +1,6 @@
 name: flip_widget
 description: Flip your widget.
-version: 0.1.4
+version: 0.1.5
 homepage: https://github.com/gsioteam/flip_widget
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  gl_canvas: ^1.0.1
+  gl_canvas: ^1.0.3
   opengl_es_bindings: ^1.0.0-pre.1
   ffi: ^1.1.2
 

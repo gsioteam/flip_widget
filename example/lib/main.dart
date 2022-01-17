@@ -18,6 +18,7 @@ class _MyAppState extends State<MyApp> {
   GlobalKey<FlipWidgetState> _flipKey = GlobalKey();
 
   Offset _oldPosition = Offset.zero;
+  bool _visible = true;
 
   @override
   void initState() {
@@ -35,39 +36,50 @@ class _MyAppState extends State<MyApp> {
         body: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: size.width,
-              height: size.height,
-              child: GestureDetector(
-                child: FlipWidget(
-                  key: _flipKey,
-                  textureSize: size * 2,
-                  child: Container(
-                    color: Colors.blue,
-                    child: Center(
-                      child: Text("hello"),
+            Visibility(
+              child: Container(
+                width: size.width,
+                height: size.height,
+                child: GestureDetector(
+                  child: FlipWidget(
+                    key: _flipKey,
+                    textureSize: size * 2,
+                    child: Container(
+                      color: Colors.blue,
+                      child: Center(
+                        child: Text("hello"),
+                      ),
                     ),
                   ),
+                  onHorizontalDragStart: (details) {
+                    _oldPosition = details.globalPosition;
+                    _flipKey.currentState?.startFlip();
+                  },
+                  onHorizontalDragUpdate: (details) {
+                    Offset off = details.globalPosition - _oldPosition;
+                    double tilt = 1/((-off.dy + 20) / 100);
+                    double percent = math.max(0, -off.dx / size.width * 1.4);
+                    percent = percent - percent / 2 * (1-1/tilt);
+                    _flipKey.currentState?.flip(percent, tilt);
+                  },
+                  onHorizontalDragEnd: (details) {
+                    _flipKey.currentState?.stopFlip();
+                  },
+                  onHorizontalDragCancel: () {
+                    _flipKey.currentState?.stopFlip();
+                  },
                 ),
-                onHorizontalDragStart: (details) {
-                  _oldPosition = details.globalPosition;
-                  _flipKey.currentState?.startFlip();
-                },
-                onHorizontalDragUpdate: (details) {
-                  Offset off = details.globalPosition - _oldPosition;
-                  double tilt = 1/((-off.dy + 20) / 100);
-                  double percent = math.max(0, -off.dx / size.width * 1.4);
-                  percent = percent - percent / 2 * (1-1/tilt);
-                  _flipKey.currentState?.flip(percent, tilt);
-                },
-                onHorizontalDragEnd: (details) {
-                  _flipKey.currentState?.stopFlip();
-                },
-                onHorizontalDragCancel: () {
-                  _flipKey.currentState?.stopFlip();
-                },
               ),
+              visible: _visible,
             ),
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    _visible = !_visible;
+                  });
+                },
+                child: Text("Toggle")
+            )
           ],
         ),
       ),
