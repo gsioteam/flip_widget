@@ -110,7 +110,9 @@ class FlipWidgetState extends State<FlipWidget> {
     RenderObject? boundary = _renderKey.currentContext?.findRenderObject();
     if (boundary is RenderRepaintBoundary) {
       await _queueAction(() async {
-        var image = await boundary.toImage();
+        var image = await boundary.toImage(
+          pixelRatio: MediaQuery.of(context).devicePixelRatio,
+        );
         var buffer = await image.toByteData(format: ImageByteFormat.rawRgba);
         if (buffer != null) {
           var bytes = buffer.buffer.asUint8List(buffer.offsetInBytes, buffer.lengthInBytes);
