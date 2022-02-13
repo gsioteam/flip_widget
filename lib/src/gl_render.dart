@@ -35,13 +35,13 @@ float py(float uvy) {
 }
 
 vec2 to_uv(vec2 pos) {
-    return vec2(pos.x / size.x, 1.0 - pos.y / size.y);
+    return vec2({l2r} pos.x / size.x, 1.0 - pos.y / size.y);
 }
 
 void main()
 {
     const float roll_size = 6.0;
-    float x1 = px(uv.x);
+    float x1 = px({l2r} uv.x);
     float y1 = py(1.0 - uv.y);
     float per = px(percent);
     if (y1 / tilt + per < x1) {
@@ -171,7 +171,9 @@ class GLRender {
   void initialize() {
     _templateString = malloc.allocate(sizeOf<Int8>() * 512);
 
-    _programHandle = loadProgram(_VertexShader, _FragmentShader);
+    _programHandle = loadProgram(_VertexShader, _FragmentShader.replaceAll(
+      "{l2r}", leftToRight ? "1.0 - " : ""
+    ));
 
     Pointer<Int32> ret = malloc.allocate(sizeOf<Int32>());
     GLES20.glGetProgramiv(_programHandle, GL_LINK_STATUS, ret);
@@ -263,6 +265,7 @@ class GLRender {
 
   int textureWidth;
   int textureHeight;
+  bool leftToRight;
 
   void draw(double percent, double tilt) {
 
@@ -309,5 +312,9 @@ class GLRender {
     GLES20.glDeleteProgram(_programHandle);
   }
 
-  GLRender(this.textureWidth, this.textureHeight);
+  GLRender({
+    required this.textureWidth,
+    required this.textureHeight,
+    required this.leftToRight,
+  });
 }

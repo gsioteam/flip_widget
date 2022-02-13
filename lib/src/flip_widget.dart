@@ -13,6 +13,7 @@ class FlipWidget extends StatefulWidget {
 
   final Widget? child;
   final Size textureSize;
+  final bool leftToRight;
 
   /// [child] is the widget you want to flip.
   /// [textureSize] is the pixel size of effect layer.
@@ -20,6 +21,7 @@ class FlipWidget extends StatefulWidget {
     Key? key,
     this.child,
     this.textureSize = const Size(512, 512),
+    this.leftToRight = false,
   }) : super(key: key);
 
   @override
@@ -80,7 +82,11 @@ class FlipWidgetState extends State<FlipWidget> {
       width: widget.textureSize.width,
       height: widget.textureSize.height,
     );
-    _render = GLRender(widget.textureSize.width.toInt(), widget.textureSize.height.toInt());
+    _render = GLRender(
+      textureWidth: widget.textureSize.width.toInt(),
+      textureHeight: widget.textureSize.height.toInt(),
+      leftToRight: widget.leftToRight,
+    );
     controller.ready.then((value) {
       _render.initialize();
     });

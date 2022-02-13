@@ -62,6 +62,7 @@ class _MyAppState extends State<MyApp> {
                         child: Text("hello"),
                       ),
                     ),
+                    // leftToRight: true,
                   ),
                   onHorizontalDragStart: (details) {
                     _oldPosition = details.globalPosition;
