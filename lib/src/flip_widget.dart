@@ -3,11 +3,15 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gl_canvas/gl_canvas.dart';
 
-import './gl_render.dart';
+import './gl_renderer.dart';
+import './factory_stub.dart'
+if (dart.library.io) 'gl_renderer_io.dart'
+if (dart.library.html) 'gl_renderer_web.dart';
 
 class FlipWidget extends StatefulWidget {
 
@@ -35,7 +39,7 @@ class FlipWidgetState extends State<FlipWidget> {
   ValueNotifier<bool> _flipping = ValueNotifier(false);
   late GLCanvasController controller;
 
-  late GLRender _render;
+  late GLRenderer _render;
 
   bool _disposed = false;
 
@@ -59,7 +63,21 @@ class FlipWidgetState extends State<FlipWidget> {
             child: widget.child,
           ),
         ),
-        ValueListenableBuilder<bool>(
+        if (kIsWeb) IgnorePointer(
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _flipping,
+            builder: (context, value, child) {
+              return Opacity(
+                  opacity: value ? 1 : 0,
+                  child: child!
+              );
+            },
+            child: GLCanvas(
+              controller: controller,
+            ),
+          ),
+        )
+        else ValueListenableBuilder<bool>(
           valueListenable: _flipping,
           builder: (context, value, child) {
             return Visibility(
@@ -82,10 +100,11 @@ class FlipWidgetState extends State<FlipWidget> {
       width: widget.textureSize.width,
       height: widget.textureSize.height,
     );
-    _render = GLRender(
+    _render = createRenderer(
       textureWidth: widget.textureSize.width.toInt(),
       textureHeight: widget.textureSize.height.toInt(),
       leftToRight: widget.leftToRight,
+      controller: controller,
     );
     controller.ready.then((value) {
       _render.initialize();

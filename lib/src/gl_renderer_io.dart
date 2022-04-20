@@ -5,8 +5,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:gl_canvas/gl_canvas.dart';
 import 'package:opengl_es_bindings/opengl_es_bindings.dart';
 import 'package:ffi/ffi.dart';
+
+import 'gl_renderer.dart';
 
 const String _VertexShader = """
 attribute vec4 position;
@@ -80,7 +84,7 @@ void main()
 }
 """;
 
-class GLRender {
+class GLRender extends GLRenderer {
   LibOpenGLES GLES20 = LibOpenGLES(
       Platform.isAndroid ?
       DynamicLibrary.open("libGLESv2.so"):
@@ -207,7 +211,7 @@ class GLRender {
 
     // VBO will cause crash on android simulator
     buffers = malloc.allocate(sizeOf<Uint32>() * 2);
-    // GLES20.glGenBuffers(2, buffers);
+    // GLES20.glGenBuffer(2, buffers);
     // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 
     // int len = sizeOf<Float>() * pos.length;
@@ -310,6 +314,7 @@ class GLRender {
       malloc.free(textures);
     }
     GLES20.glDeleteProgram(_programHandle);
+
   }
 
   GLRender({
@@ -317,4 +322,17 @@ class GLRender {
     required this.textureHeight,
     required this.leftToRight,
   });
+}
+
+GLRenderer createRenderer({
+  required int textureWidth,
+  required int textureHeight,
+  required bool leftToRight,
+  required GLCanvasController controller,
+}) {
+  return GLRender(
+      textureWidth: textureWidth,
+      textureHeight: textureHeight,
+      leftToRight: leftToRight
+  );
 }
