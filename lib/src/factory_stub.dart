@@ -9,6 +9,7 @@ GLRenderer createRenderer({
   required int textureHeight,
   required bool leftToRight,
   required GLCanvasController controller,
+  double rollSize = 12,
 }) {
   throw Exception();
 }

@@ -18,6 +18,7 @@ class FlipWidget extends StatefulWidget {
   final Widget? child;
   final Size textureSize;
   final bool leftToRight;
+  final double rollSize;
 
   /// [child] is the widget you want to flip.
   /// [textureSize] is the pixel size of effect layer.
@@ -26,6 +27,7 @@ class FlipWidget extends StatefulWidget {
     this.child,
     this.textureSize = const Size(512, 512),
     this.leftToRight = false,
+    this.rollSize = 12,
   }) : super(key: key);
 
   @override
@@ -105,6 +107,7 @@ class FlipWidgetState extends State<FlipWidget> {
       textureHeight: widget.textureSize.height.toInt(),
       leftToRight: widget.leftToRight,
       controller: controller,
+      rollSize: widget.rollSize,
     );
     controller.ready.then((value) {
       _render.initialize();

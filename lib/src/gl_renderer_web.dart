@@ -36,6 +36,7 @@ class GLRendererWeb extends GLRenderer {
     required int textureHeight,
     required bool leftToRight,
     required GLCanvasController controller,
+    double rollSize = 12,
   }) : _renderer = FlipRenderer(
     textureWidth: textureWidth,
     textureHeight: textureHeight,
@@ -49,11 +50,13 @@ GLRenderer createRenderer({
   required int textureHeight,
   required bool leftToRight,
   required GLCanvasController controller,
+  double rollSize = 12,
 }) {
   return GLRendererWeb(
-      textureWidth: textureWidth,
-      textureHeight: textureHeight,
-      leftToRight: leftToRight,
-      controller: controller
+    textureWidth: textureWidth,
+    textureHeight: textureHeight,
+    leftToRight: leftToRight,
+    controller: controller,
+    rollSize: rollSize
   );
 }

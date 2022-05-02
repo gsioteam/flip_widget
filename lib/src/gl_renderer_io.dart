@@ -28,6 +28,7 @@ uniform sampler2D texture;
 uniform float percent;
 uniform float tilt;
 uniform vec2 size;
+uniform float roll_size;
 varying vec2 uv;
 
 float px(float uvx) {
@@ -44,7 +45,6 @@ vec2 to_uv(vec2 pos) {
 
 void main()
 {
-    const float roll_size = 6.0;
     float x1 = px({l2r} uv.x);
     float y1 = py(1.0 - uv.y);
     float per = px(percent);
@@ -153,6 +153,7 @@ class GLRender extends GLRenderer {
   int _percentUniform = 0;
   int _tiltUniform = 0;
   int _sizeUniform = 0;
+  int _rollSizeUniform = 0;
 
   late Pointer<Uint32> buffers;
   int _mainTexture = -1;
@@ -194,6 +195,7 @@ class GLRender extends GLRenderer {
     _percentUniform = GLES20.glGetUniformLocation(_programHandle, _n("percent"));
     _tiltUniform = GLES20.glGetUniformLocation(_programHandle, _n("tilt"));
     _sizeUniform = GLES20.glGetUniformLocation(_programHandle, _n("size"));
+    _rollSizeUniform = GLES20.glGetUniformLocation(_programHandle, _n("roll_size"));
 
     List<double> pos = [
       -1.0, 1.0, 0.0,
@@ -270,6 +272,7 @@ class GLRender extends GLRenderer {
   int textureWidth;
   int textureHeight;
   bool leftToRight;
+  double rollSize = 12;
 
   void draw(double percent, double tilt) {
 
@@ -298,6 +301,8 @@ class GLRender extends GLRenderer {
 
     GLES20.glUniform2f(_sizeUniform, _imageSize.width, _imageSize.height);
 
+    GLES20.glUniform1f(_rollSizeUniform, rollSize);
+
     GLES20.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
 
@@ -321,6 +326,7 @@ class GLRender extends GLRenderer {
     required this.textureWidth,
     required this.textureHeight,
     required this.leftToRight,
+    required this.rollSize,
   });
 }
 
@@ -329,10 +335,12 @@ GLRenderer createRenderer({
   required int textureHeight,
   required bool leftToRight,
   required GLCanvasController controller,
+  double rollSize = 12,
 }) {
   return GLRender(
-      textureWidth: textureWidth,
-      textureHeight: textureHeight,
-      leftToRight: leftToRight
+    textureWidth: textureWidth,
+    textureHeight: textureHeight,
+    leftToRight: leftToRight,
+    rollSize: rollSize,
   );
 }
