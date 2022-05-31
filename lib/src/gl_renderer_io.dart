@@ -1,16 +1,14 @@
-
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:gl_canvas/gl_canvas.dart';
 import 'package:opengl_es_bindings/opengl_es_bindings.dart';
 import 'package:ffi/ffi.dart';
 
 import 'gl_renderer.dart';
+import 'dart:ui' as ui;
 
 const String _VertexShader = """
 attribute vec4 position;
@@ -85,16 +83,13 @@ void main()
 """;
 
 class GLRender extends GLRenderer {
-  LibOpenGLES GLES20 = LibOpenGLES(
-      Platform.isAndroid ?
-      DynamicLibrary.open("libGLESv2.so"):
-      DynamicLibrary.process()
-  );
+  LibOpenGLES GLES20 = LibOpenGLES(Platform.isAndroid
+      ? DynamicLibrary.open("libGLESv2.so")
+      : DynamicLibrary.process());
 
   int loadProgram(String vertex, String fragment) {
     int vertexShader = loadShader(GL_VERTEX_SHADER, vertex);
-    if (vertexShader == 0)
-      return 0;
+    if (vertexShader == 0) return 0;
 
     int fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragment);
     if (fragmentShader == 0) {
@@ -104,8 +99,7 @@ class GLRender extends GLRenderer {
 
     // Create the program object
     int programHandle = GLES20.glCreateProgram();
-    if (programHandle == 0)
-      return 0;
+    if (programHandle == 0) return 0;
 
     GLES20.glAttachShader(programHandle, vertexShader);
     GLES20.glAttachShader(programHandle, fragmentShader);
@@ -139,7 +133,8 @@ class GLRender extends GLRenderer {
     Pointer<Int32> ret = malloc.allocate(sizeOf<Int32>());
     GLES20.glGetShaderiv(shader, GL_COMPILE_STATUS, ret);
     if (ret[0] == GL_FALSE) {
-      GLES20.glGetShaderInfoLog(shader, 512, Pointer<Int32>.fromAddress(0), _templateString);
+      GLES20.glGetShaderInfoLog(
+          shader, 512, Pointer<Int32>.fromAddress(0), _templateString);
       print("FlipTexture: ${_templateString.cast<Utf8>().toDartString()}");
     }
 
@@ -163,7 +158,7 @@ class GLRender extends GLRenderer {
 
   late Pointer<Int8> _templateString;
 
-  Size _imageSize = const Size(512, 512);
+  ui.Size _imageSize = const ui.Size(512, 512);
 
   Pointer<Int8> _n(String str) {
     final units = utf8.encode(str);
@@ -176,39 +171,53 @@ class GLRender extends GLRenderer {
   void initialize() {
     _templateString = malloc.allocate(sizeOf<Int8>() * 512);
 
-    _programHandle = loadProgram(_VertexShader, _FragmentShader.replaceAll(
-      "{l2r}", leftToRight ? "1.0 - " : ""
-    ));
+    _programHandle = loadProgram(_VertexShader,
+        _FragmentShader.replaceAll("{l2r}", leftToRight ? "1.0 - " : ""));
 
     Pointer<Int32> ret = malloc.allocate(sizeOf<Int32>());
     GLES20.glGetProgramiv(_programHandle, GL_LINK_STATUS, ret);
-    if(ret[0] == 0)
-    {
-      GLES20.glGetProgramInfoLog(_programHandle, 512, Pointer<Int32>.fromAddress(0), _templateString);
+    if (ret[0] == 0) {
+      GLES20.glGetProgramInfoLog(
+          _programHandle, 512, Pointer<Int32>.fromAddress(0), _templateString);
       print("FlipTexture:${_templateString.cast<Utf8>().toDartString()}");
     }
 
     GLES20.glUseProgram(_programHandle);
     _positionAttr = GLES20.glGetAttribLocation(_programHandle, _n("position"));
     _texCoordAttr = GLES20.glGetAttribLocation(_programHandle, _n("tex_coord"));
-    _textureUniform = GLES20.glGetUniformLocation(_programHandle, _n("texture"));
-    _percentUniform = GLES20.glGetUniformLocation(_programHandle, _n("percent"));
+    _textureUniform =
+        GLES20.glGetUniformLocation(_programHandle, _n("texture"));
+    _percentUniform =
+        GLES20.glGetUniformLocation(_programHandle, _n("percent"));
     _tiltUniform = GLES20.glGetUniformLocation(_programHandle, _n("tilt"));
     _sizeUniform = GLES20.glGetUniformLocation(_programHandle, _n("size"));
-    _rollSizeUniform = GLES20.glGetUniformLocation(_programHandle, _n("roll_size"));
+    _rollSizeUniform =
+        GLES20.glGetUniformLocation(_programHandle, _n("roll_size"));
 
     List<double> pos = [
-      -1.0, 1.0, 0.0,
-      1.0, 1.0, 0.0,
-      -1.0, -1.0, 0.0,
-      1.0, -1.0, 0.0,
+      -1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      -1.0,
+      -1.0,
+      0.0,
+      1.0,
+      -1.0,
+      0.0,
     ];
 
     List<double> uv = [
-      0, 0,
-      1, 0,
-      0, 1,
-      1, 1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
     ];
 
     // VBO will cause crash on android simulator
@@ -242,8 +251,7 @@ class GLRender extends GLRenderer {
   }
 
   void updateTexture(int width, int height, Uint8List bytes) {
-
-    _imageSize = Size(width.toDouble(), height.toDouble());
+    _imageSize = ui.Size(width.toDouble(), height.toDouble());
 
     Pointer<Uint32> textures = malloc.allocate(sizeOf<Uint32>());
     if (_mainTexture != -1) {
@@ -265,7 +273,8 @@ class GLRender extends GLRenderer {
     Pointer<Uint8> buffer = malloc.allocate(bytes.length);
     var bufferBytes = buffer.asTypedList(bytes.length);
     bufferBytes.setAll(0, bytes);
-    GLES20.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.cast<Void>());
+    GLES20.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+        GL_UNSIGNED_BYTE, buffer.cast<Void>());
     malloc.free(buffer);
   }
 
@@ -275,7 +284,6 @@ class GLRender extends GLRenderer {
   double rollSize = 12;
 
   void draw(double percent, double tilt) {
-
     GLES20.glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GLES20.glClearColor(0, 0, 0, 0);
     GLES20.glClear(GL_COLOR_BUFFER_BIT);
@@ -286,11 +294,13 @@ class GLRender extends GLRenderer {
 
     GLES20.glEnableVertexAttribArray(_positionAttr);
     // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-    GLES20.glVertexAttribPointer(_positionAttr, 3, GL_FLOAT, GL_FALSE, 0, _posBuffer.cast<Void>() );
+    GLES20.glVertexAttribPointer(
+        _positionAttr, 3, GL_FLOAT, GL_FALSE, 0, _posBuffer.cast<Void>());
 
     GLES20.glEnableVertexAttribArray(_texCoordAttr);
     // GLES20.glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-    GLES20.glVertexAttribPointer(_texCoordAttr, 2, GL_FLOAT, GL_FALSE, 0, _uvBuffer.cast<Void>() );
+    GLES20.glVertexAttribPointer(
+        _texCoordAttr, 2, GL_FLOAT, GL_FALSE, 0, _uvBuffer.cast<Void>());
 
     GLES20.glActiveTexture(GL_TEXTURE0);
     GLES20.glBindTexture(GL_TEXTURE_2D, _mainTexture);
@@ -319,7 +329,6 @@ class GLRender extends GLRenderer {
       malloc.free(textures);
     }
     GLES20.glDeleteProgram(_programHandle);
-
   }
 
   GLRender({

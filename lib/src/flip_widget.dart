@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:ui';
 
@@ -10,11 +9,10 @@ import 'package:gl_canvas/gl_canvas.dart';
 
 import './gl_renderer.dart';
 import './factory_stub.dart'
-if (dart.library.io) 'gl_renderer_io.dart'
-if (dart.library.html) 'gl_renderer_web.dart';
+    if (dart.library.io) 'gl_renderer_io.dart'
+    if (dart.library.html) 'gl_renderer_web.dart';
 
 class FlipWidget extends StatefulWidget {
-
   final Widget? child;
   final Size textureSize;
   final bool leftToRight;
@@ -35,8 +33,8 @@ class FlipWidget extends StatefulWidget {
 }
 
 typedef FlipAction<T> = FutureOr<T> Function();
-class FlipWidgetState extends State<FlipWidget> {
 
+class FlipWidgetState extends State<FlipWidget> {
   GlobalKey _renderKey = GlobalKey();
   ValueNotifier<bool> _flipping = ValueNotifier(false);
   late GLCanvasController controller;
@@ -65,32 +63,28 @@ class FlipWidgetState extends State<FlipWidget> {
             child: widget.child,
           ),
         ),
-        if (kIsWeb) IgnorePointer(
-          child: ValueListenableBuilder<bool>(
+        if (kIsWeb)
+          IgnorePointer(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _flipping,
+              builder: (context, value, child) {
+                return Opacity(opacity: value ? 1 : 0, child: child!);
+              },
+              child: GLCanvas(
+                controller: controller,
+              ),
+            ),
+          )
+        else
+          ValueListenableBuilder<bool>(
             valueListenable: _flipping,
             builder: (context, value, child) {
-              return Opacity(
-                  opacity: value ? 1 : 0,
-                  child: child!
-              );
+              return Visibility(visible: value, child: child!);
             },
             child: GLCanvas(
               controller: controller,
             ),
-          ),
-        )
-        else ValueListenableBuilder<bool>(
-          valueListenable: _flipping,
-          builder: (context, value, child) {
-            return Visibility(
-                visible: value,
-                child: child!
-            );
-          },
-          child: GLCanvas(
-            controller: controller,
-          ),
-        )
+          )
       ],
     );
   }
@@ -143,7 +137,8 @@ class FlipWidgetState extends State<FlipWidget> {
         );
         var buffer = await image.toByteData(format: ImageByteFormat.rawRgba);
         if (buffer != null) {
-          var bytes = buffer.buffer.asUint8List(buffer.offsetInBytes, buffer.lengthInBytes);
+          var bytes = buffer.buffer
+              .asUint8List(buffer.offsetInBytes, buffer.lengthInBytes);
           if (!_disposed) {
             controller.beginDraw();
             _render.updateTexture(image.width, image.height, bytes);

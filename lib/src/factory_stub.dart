@@ -1,5 +1,3 @@
-
-
 import 'package:gl_canvas/gl_canvas.dart';
 
 import 'gl_renderer.dart';

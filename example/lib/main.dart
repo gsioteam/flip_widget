@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:flip_widget/flip_widget.dart';
 import 'dart:math' as math;
 
@@ -70,9 +68,9 @@ class _MyAppState extends State<MyApp> {
                   },
                   onHorizontalDragUpdate: (details) {
                     Offset off = details.globalPosition - _oldPosition;
-                    double tilt = 1/_clampMin((-off.dy + 20) / 100);
+                    double tilt = 1 / _clampMin((-off.dy + 20) / 100);
                     double percent = math.max(0, -off.dx / size.width * 1.4);
-                    percent = percent - percent / 2 * (1-1/tilt);
+                    percent = percent - percent / 2 * (1 - 1 / tilt);
                     _flipKey.currentState?.flip(percent, tilt);
                   },
                   onHorizontalDragEnd: (details) {
@@ -91,8 +89,7 @@ class _MyAppState extends State<MyApp> {
                     _visible = !_visible;
                   });
                 },
-                child: Text("Toggle")
-            )
+                child: Text("Toggle"))
           ],
         ),
       ),
